@@ -24,6 +24,7 @@ ParsedRule parseProductionRule(in string rule) {
     auto expansions = c[2].split("|").map!parseExpansion.array;
     return ParsedRule(c[1], expansions);
 }
+@("parse rules")
 unittest {
     void check(string rule, ParsedRule expected) {
         const parsed = parseProductionRule(rule);
@@ -51,6 +52,7 @@ auto simplify(ParsedRule[] rules) {
     }
     return productions;
 }
+@("simplify")
 unittest {
     {
         auto rules = [ParsedRule("Foo", [["A", "B"], ["B", "A"]]),
@@ -104,6 +106,7 @@ auto TERM(Expansions[string] productions) {
     auto newProductions = productions.byPair.map!TERM_Production.array;
     return (newProductions ~ newUnitProductions.byPair.array).assocArray;
 }
+@("TERM")
 unittest {
     {
         auto productions = ["Foo": [["A", "B"], ["B", "A"]],

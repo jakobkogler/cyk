@@ -26,3 +26,5 @@ docs/
 # Executables
 cyk
 cyk-test-library
+
+cyk-test-unittest
