@@ -1,0 +1,9 @@
+{
+	"authors": [
+		"Jakob Kogler"
+	],
+	"copyright": "Copyright © 2021, Jakob Kogler",
+	"description": "context-free grammar parser",
+	"license": "MIT",
+	"name": "cyk"
+}

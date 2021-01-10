@@ -1,2 +1,3 @@
 # cyk
-context-free grammar parser
+
+A context-free grammar parser using the CYK algorithm.
