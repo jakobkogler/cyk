@@ -1,5 +1,6 @@
 import std.array : array, split, byPair, assocArray;
 import std.algorithm : map;
+import std.format : format;
 import std.regex : ctRegex, match, matchAll;
 import std.typecons : Tuple;
 
@@ -166,5 +167,58 @@ unittest {
                          "S0": [["S"]]
         ];
         assert(START(productions) == expected);
+    }
+}
+
+auto BIN(Expansions[string] productions) {
+    Expansions[string] newProductions;
+    foreach (name, expansions; productions) {
+        Expansions newExpansions;
+        foreach (expansion_idx, expansion; expansions) {
+            if (expansion.length <= 2) {
+                newExpansions ~= expansion;
+            } else {
+                string lastName = name;
+                foreach (idx, token; expansion[0..$-2]) {
+                    string newName = format!`%s_%s_%s`(name, expansion_idx + 1, idx + 1);
+                    if (idx == 0) {
+                        newExpansions ~= [token, newName];
+                    } else {
+                        newProductions[lastName] = [[token, newName]];
+                    }
+                    lastName = newName;
+                }
+                newProductions[lastName] = [expansion[$-2 .. $]];
+            }
+        }
+        newProductions[name] = newExpansions;
+    }
+
+    return newProductions;
+}
+@("BIN")
+unittest {
+    {
+        auto productions = ["Foo": [[`"*"`, "Foo"], ["Bar"]]];
+        auto expected = productions.dup;
+        assert(BIN(productions) == expected);
+    }
+    {
+        auto productions = ["Foo": [[`"*"`, "Foo", `"*"`], ["Bar"]]];
+        auto expected = [
+            "Foo": [[`"*"`, "Foo_1_1"], ["Bar"]],
+            "Foo_1_1": [["Foo", `"*"`]]
+        ];
+        assert(BIN(productions) == expected);
+    }
+    {
+        auto productions = ["Foo": [[`"*"`, "Foo", `"*"`, "Bar"], ["Bar", "Baz", "FooBar"]]];
+        auto expected = [
+            "Foo": [[`"*"`, "Foo_1_1"], ["Bar", "Foo_2_1"]],
+            "Foo_1_1": [["Foo", "Foo_1_2"]],
+            "Foo_1_2": [[`"*"`, "Bar"]],
+            "Foo_2_1": [["Baz", "FooBar"]]
+        ];
+        assert(BIN(productions) == expected);
     }
 }
