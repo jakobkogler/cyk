@@ -143,3 +143,28 @@ unittest {
         assert(TERM(productions) == expected);
     }
 }
+
+auto START(Expansions[string] productions, string S = "S") {
+    productions["S0"] = [[S]];
+    return productions;
+}
+@("START")
+unittest {
+    {
+        auto productions = ["Foo": [[`"*"`, "Foo", `"*"`], ["Bar"]],
+                            "Bar": [[`"a"`], [`"b"`]]
+        ];
+        auto expected = ["Foo": [[`"*"`, "Foo", `"*"`], ["Bar"]],
+                         "Bar": [[`"a"`], [`"b"`]],
+                         "S0": [["Foo"]]
+        ];
+        assert(START(productions, "Foo") == expected);
+    }
+    {
+        auto productions = ["S": [[`"*"`, "S", `"*"`], [`"#"`]]];
+        auto expected = ["S": [[`"*"`, "S", `"*"`], [`"#"`]],
+                         "S0": [["S"]]
+        ];
+        assert(START(productions) == expected);
+    }
+}
