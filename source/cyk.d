@@ -1,5 +1,5 @@
 import std.array : array, split, byPair, assocArray;
-import std.algorithm : map;
+import std.algorithm : all, count, filter, map, reduce, sort;
 import std.format : format;
 import std.regex : ctRegex, match, matchAll;
 import std.typecons : Tuple;
@@ -224,6 +224,130 @@ unittest {
             "Foo_2_1": [["Baz", "FooBar"]]
         ];
         const result = BIN(productions);
+        assert(result == expected);
+    }
+}
+
+Expansions DEL_recursive(Expansion expansion, const bool[string] nullable) {
+    Expansions newExpansions;
+    if (expansion.length) {
+        auto rec = DEL_recursive(expansion[0..$-1], nullable);
+        newExpansions = rec.map!(e => e ~ expansion[$-1]).array;
+        if (expansion[$-1] in nullable) {
+            newExpansions ~= rec;
+        }
+        return newExpansions;
+    } else {
+        newExpansions ~= [[]];
+        return newExpansions;
+    }
+}
+@("DEL_recursive")
+unittest {
+    {
+        auto expansion = ["A", "B", "C"];
+        auto nullable = ["A": true, "C": true];
+        auto expected = [["B"], ["A", "B"], ["B", "C"], ["A", "B", "C"]];
+        auto result = DEL_recursive(expansion, nullable);
+        expected.sort;
+        result.sort;
+        assert(expected == result);
+    }
+    {
+        auto expansion = ["A", "B"];
+        auto nullable = ["A": true, "B": true];
+        auto expected = [[], ["A"], ["B"], ["A", "B"]];
+        auto result = DEL_recursive(expansion, nullable);
+        expected.sort;
+        result.sort;
+        assert(expected == result);
+    }
+}
+
+auto DEL(Expansions[string] productions) {
+    bool[string] nullable;
+    foreach (name, expansions; productions) {
+        if (expansions.map!"a.length".count(0))
+            nullable[name] = true;
+    }
+    bool found_more;
+    do {
+        found_more = false;
+        foreach (name, expansions; productions) {
+            if (name in nullable)
+                continue;
+            foreach (expansion; expansions) {
+                if (expansion.map!(t => (t in nullable) !is null).all) {
+                    nullable[name] = true;
+                    found_more = true;
+                }
+            }
+        }
+
+    } while (found_more);
+
+    Expansions[string] newProductions;
+    foreach (name, expansions; productions) {
+        newProductions[name] = expansions.map!(e => DEL_recursive(e, nullable))
+            .array.reduce!"a ~ b"
+            .filter!"a.length".array;
+    }
+    return newProductions;
+}
+@("DEL")
+unittest {
+    {
+        auto productions = ["Foo": [["Bar"], []],
+                            "Bar": [[`"a"`]]];
+        const expected = ["Foo": [["Bar"]],
+                          "Bar": [[`"a"`]]];
+        const result = DEL(productions);
+        assert(result == expected);
+    }
+    {
+        auto productions = ["Foo": [["Bar"]],
+                            "Bar": [[`"a"`], []]];
+        const expected = ["Foo": [["Bar"]],
+                          "Bar": [[`"a"`]]];
+        const result = DEL(productions);
+        assert(result == expected);
+    }
+    {
+        auto productions = ["Foo": [[`"0"`, "Bar", `"1"`]],
+                            "Bar": [[`"a"`], []]];
+        const expected = ["Foo": [[`"0"`, "Bar", `"1"`], [`"0"`, `"1"`]],
+                          "Bar": [[`"a"`]]];
+        const result = DEL(productions);
+        assert(result == expected);
+    }
+    {
+        auto productions = ["Foo": [["Bar", `"*"`, "Bar"]],
+                            "Bar": [[`"a"`], []]];
+        const expected = ["Foo": [["Bar", `"*"`, "Bar"], [`"*"`, "Bar"], ["Bar", `"*"`], [`"*"`]],
+                          "Bar": [[`"a"`]]];
+        const result = DEL(productions);
+        assert(result == expected);
+    }
+    {
+        auto productions = ["Foo": [["Bar", `"*"`, "Bar"]],
+                            "Bar": [["Baz", "Baz"]],
+                            "Baz": [[`"a"`], []]];
+        const expected = ["Foo": [["Bar", `"*"`, "Bar"], [`"*"`, "Bar"], ["Bar", `"*"`], [`"*"`]],
+                          "Bar": [["Baz", "Baz"], ["Baz"], ["Baz"]],
+                          "Baz": [[`"a"`]]];
+        const result = DEL(productions);
+        assert(result == expected);
+    }
+    {
+        auto productions = ["Foo": [["Bar", `"*"`, "Bar"]],
+                            "Bar": [["FooBar", "FooBar"], [`"b"`]],
+                            "FooBar": [["Baz"]],
+                            "Baz": [[`"a"`], []]];
+        const expected = ["Foo": [["Bar", `"*"`, "Bar"], [`"*"`, "Bar"], ["Bar", `"*"`], [`"*"`]],
+                          "Bar": [["FooBar", "FooBar"], ["FooBar"], ["FooBar"], [`"b"`]],
+                          "FooBar": [["Baz"]],
+                          "Baz": [[`"a"`]]];
+        const result = DEL(productions);
         assert(result == expected);
     }
 }
