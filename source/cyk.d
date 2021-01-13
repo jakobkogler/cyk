@@ -155,18 +155,20 @@ unittest {
         auto productions = ["Foo": [[`"*"`, "Foo", `"*"`], ["Bar"]],
                             "Bar": [[`"a"`], [`"b"`]]
         ];
-        auto expected = ["Foo": [[`"*"`, "Foo", `"*"`], ["Bar"]],
-                         "Bar": [[`"a"`], [`"b"`]],
-                         "S0": [["Foo"]]
+        const expected = ["Foo": [[`"*"`, "Foo", `"*"`], ["Bar"]],
+                          "Bar": [[`"a"`], [`"b"`]],
+                          "S0": [["Foo"]]
         ];
-        assert(START(productions, "Foo") == expected);
+        const result = START(productions, "Foo");
+        assert(result == expected);
     }
     {
         auto productions = ["S": [[`"*"`, "S", `"*"`], [`"#"`]]];
-        auto expected = ["S": [[`"*"`, "S", `"*"`], [`"#"`]],
-                         "S0": [["S"]]
+        const expected = ["S": [[`"*"`, "S", `"*"`], [`"#"`]],
+                          "S0": [["S"]]
         ];
-        assert(START(productions) == expected);
+        const result = START(productions);
+        assert(result == expected);
     }
 }
 
@@ -200,25 +202,28 @@ auto BIN(Expansions[string] productions) {
 unittest {
     {
         auto productions = ["Foo": [[`"*"`, "Foo"], ["Bar"]]];
-        auto expected = productions.dup;
-        assert(BIN(productions) == expected);
+        const expected = productions.dup;
+        const result = BIN(productions);
+        assert(result == expected);
     }
     {
         auto productions = ["Foo": [[`"*"`, "Foo", `"*"`], ["Bar"]]];
-        auto expected = [
+        const expected = [
             "Foo": [[`"*"`, "Foo_1_1"], ["Bar"]],
             "Foo_1_1": [["Foo", `"*"`]]
         ];
-        assert(BIN(productions) == expected);
+        const result = BIN(productions);
+        assert(result == expected);
     }
     {
         auto productions = ["Foo": [[`"*"`, "Foo", `"*"`, "Bar"], ["Bar", "Baz", "FooBar"]]];
-        auto expected = [
+        const expected = [
             "Foo": [[`"*"`, "Foo_1_1"], ["Bar", "Foo_2_1"]],
             "Foo_1_1": [["Foo", "Foo_1_2"]],
             "Foo_1_2": [[`"*"`, "Bar"]],
             "Foo_2_1": [["Baz", "FooBar"]]
         ];
-        assert(BIN(productions) == expected);
+        const result = BIN(productions);
+        assert(result == expected);
     }
 }
