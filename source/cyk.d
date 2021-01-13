@@ -264,6 +264,11 @@ unittest {
     }
 }
 
+/**
+Eliminate ε-rules
+
+Eliminate all rules of the form "A → ε" where "A" is not "S0".
+ */
 auto DEL(Expansions[string] productions) {
     bool[string] nullable;
     foreach (name, expansions; productions) {
@@ -286,12 +291,18 @@ auto DEL(Expansions[string] productions) {
 
     } while (found_more);
 
+    const S0isNullable = ("S0" in nullable) !is null;
+    nullable.remove("S0");
+
     Expansions[string] newProductions;
     foreach (name, expansions; productions) {
         newProductions[name] = expansions.map!(e => DEL_recursive(e, nullable))
             .array.reduce!"a ~ b"
             .filter!"a.length".array;
     }
+
+    if (S0isNullable)
+        newProductions["S0"] ~= [[]];
     return newProductions;
 }
 @("DEL")
@@ -347,6 +358,22 @@ unittest {
                           "Bar": [["FooBar", "FooBar"], ["FooBar"], ["FooBar"], [`"b"`]],
                           "FooBar": [["Baz"]],
                           "Baz": [[`"a"`]]];
+        const result = DEL(productions);
+        assert(result == expected);
+    }
+    {
+        auto productions = ["Foo": [["Bar"], []],
+                            "S0": [["Foo"]]];
+        const expected = ["Foo": [["Bar"]],
+                          "S0": [["Foo"], []]];
+        const result = DEL(productions);
+        assert(result == expected);
+    }
+    {
+        auto productions = ["Foo": [["Bar"], []],
+                            "S0": [[`"*"`, "Foo"]]];
+        const expected = ["Foo": [["Bar"]],
+                          "S0": [[`"*"`, "Foo"], [`"*"`]]];
         const result = DEL(productions);
         assert(result == expected);
     }
