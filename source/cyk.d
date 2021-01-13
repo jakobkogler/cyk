@@ -74,10 +74,20 @@ unittest {
     }
 }
 
+/**
+Checks if a string is a terminal
+ */
 bool isTerminal(in string s) {
     return s[0] == '"';
 }
 
+/**
+Eliminate rules with nonsolitary terminals
+
+Replace the rule "A → X1 ... a ... XN" with:
+ - "A → X1 ... NA ... XN"
+ - "NA → a"
+ */
 auto TERM(Expansions[string] productions) {
     Expansions[string] newUnitProductions;
 
@@ -145,6 +155,11 @@ unittest {
     }
 }
 
+/**
+Introduce a new start symbol "S0"
+
+Makes sure that the old start symbol (adjustable via parameter) doesn't appear in a right side.
+ */
 auto START(Expansions[string] productions, string S = "S") {
     productions["S0"] = [[S]];
     return productions;
@@ -172,6 +187,15 @@ unittest {
     }
 }
 
+/**
+Eliminate right-hand sides with more then 2 nonterminals
+
+Rules like "A → X1 X2 ... XN" will be split up into the rules:
+ - "A → X1 A1"
+ - "A1 → X2 A2"
+ - ...
+ - "AN-2 → XN-1 XN"
+ */
 auto BIN(Expansions[string] productions) {
     Expansions[string] newProductions;
     foreach (name, expansions; productions) {
