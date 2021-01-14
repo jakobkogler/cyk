@@ -402,3 +402,53 @@ unittest {
         assert(result == expected);
     }
 }
+
+/**
+Eliminate unit rules
+
+Replace rules of the form "A → B" with "A → X1 X2 ... XN" for ever "B → X1 X2 ... XN" rule.
+ */
+auto UNIT(Expansions[string] productions) {
+    Expansions[string] newProductions;
+    foreach (name, expansions; productions) {
+        Expansions newExpansions = expansions;
+        while (true) {
+            bool finished = true;
+            Expansions newExpansions2;
+            foreach (expansion; newExpansions) {
+                if (expansion.length > 1) {
+                    newExpansions2 ~= expansion;
+                } else {
+                    newExpansions2 ~= productions[expansion[0]];
+                    finished = false;
+                }
+            }
+            newExpansions = newExpansions2;
+            if (finished)
+                break;
+        }
+        newProductions[name] = newExpansions;
+    }
+    return newProductions;
+}
+@("UNIT")
+unittest {
+    {
+        auto productions = ["Foo": [["Bar"]],
+                            "Bar": [[`"*"`, "Foo"]]];
+        const expected = ["Foo": [[`"*"`, "Foo"]],
+                          "Bar": [[`"*"`, "Foo"]]];
+        const result = UNIT(productions);
+        assert(result == expected);
+    }
+    {
+        auto productions = ["Foo": [["Baz"]],
+                            "Baz": [["Bar"], [`"#"`, "Bar"]],
+                            "Bar": [[`"*"`, "Foo"]]];
+        const expected = ["Foo": [[`"*"`, "Foo"], [`"#"`, "Bar"]],
+                          "Baz": [[`"*"`, "Foo"], [`"#"`, "Bar"]],
+                          "Bar": [[`"*"`, "Foo"]]];
+        const result = UNIT(productions);
+        assert(result == expected);
+    }
+}
