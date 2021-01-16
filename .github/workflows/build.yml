@@ -1,9 +1,9 @@
-name: test
+name: build
 on: [push, pull_request]
 
 jobs:
   linux:
-    name: ${{ matrix.os }}-${{ matrix.dc }}
+    name: ${{ matrix.os }} ${{ matrix.dc }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -21,6 +21,6 @@ jobs:
       - name: Run tests
         run: |
           dub test --coverage
-      - name: 'Upload coverage to Codecov'
+      - name: Upload coverage to Codecov
         if: matrix.dc == 'dmd-latest'
         uses: codecov/codecov-action@v1
