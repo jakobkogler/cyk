@@ -340,7 +340,7 @@ auto UNIT(Expansions[string] productions) {
             bool finished = true;
             Expansions newExpansions2;
             foreach (expansion; newExpansions) {
-                if (expansion.length > 1) {
+                if (expansion.length > 1 || expansion.isTerminal) {
                     newExpansions2 ~= expansion;
                 } else {
                     newExpansions2 ~= productions[expansion[0]];
@@ -375,11 +375,17 @@ unittest {
         const result = UNIT(productions);
         assert(result == expected);
     }
+    {
+        auto productions = ["Foo": [[`"*"`]]];
+        const expected = productions.dup;
+        const result = UNIT(productions);
+        assert(result == expected);
+    }
 }
 
 /**
 Computes the Chomsky normal form
  */
 auto ChomskyNormalForm(Expansions[string] productions, string S = "S") {
-    productions.START(S).TERM.BIN.DEL.UNIT;
+    return productions.START(S).TERM.BIN.DEL.UNIT;
 }

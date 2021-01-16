@@ -12,3 +12,7 @@ bool isTerminalRule(T)(in T production) {
     return production.value.length == 1 && production.value[0].length == 1
         && production.value[0][0].isTerminal;
 }
+
+bool isTerminal(const Expansion expansion) {
+    return expansion.length == 1 && expansion[0].isTerminal;
+}
