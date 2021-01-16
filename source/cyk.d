@@ -93,29 +93,36 @@ unittest {
 
 struct ProductionRule {
     int idx;
-    string name;
-    string[] right;
+    int[2] right;
 }
 
-bool isTerminal(const ProductionRule rule) {
-    return rule.right.length == 1 && rule.right[0].isTerminal;
+struct TerminalRule {
+    int idx;
+    string s;
 }
 
 class CYK {
     this(string[] rules, string S = "S") {
-        this.cnf = rules.map!parseProductionRule.array.simplify.ChomskyNormalForm(S);
+        const cnf = rules.map!parseProductionRule.array.simplify.ChomskyNormalForm(S);
         int idx;
-        foreach (name, expansions; this.cnf) {
+        foreach (name, expansions; cnf) {
             toIdx[name] = idx;
-            foreach (expansion; expansions) {
-                productionRules ~= ProductionRule(idx, name, expansion);
-            }
             idx += 1;
+        }
+
+        foreach (name, expansions; cnf) {
+            foreach (expansion; expansions) {
+                if (expansion.length == 2) {
+                    productionRules ~= ProductionRule(toIdx[name], [toIdx[expansion[0]], toIdx[expansion[1]]]);
+                } else if (expansion.length == 1) {
+                    terminalRules ~= TerminalRule(toIdx[name], expansion[0][1..$-1]);
+                }
+            }
         }
     }
 
-    private Expansions[string] cnf;
     private ProductionRule[] productionRules;
+    private TerminalRule[] terminalRules;
     private int[string] toIdx;
 
     /**
@@ -123,13 +130,13 @@ class CYK {
      */
     bool check(string[] word) {
         const n = word.length.to!int;
-        const r = productionRules.length;
+        const r = toIdx.length;
 
         bool[][][] P = new bool[][][](n, n, r);
         foreach (s, c; word) {
-            foreach (production; productionRules) {
-                if (production.isTerminal && production.right[0][1..$-1] == c)
-                    P[0][s][production.idx] = true;
+            foreach (rule; terminalRules) {
+                if (rule.s == c)
+                    P[0][s][rule.idx] = true;
             }
         }
 
@@ -137,10 +144,8 @@ class CYK {
             foreach (s; 0 .. n-l+1) {
                 foreach (p; 1 .. l) {
                     foreach (production; productionRules) {
-                        if (production.isTerminal)
-                            continue;
-                        if (P[p-1][s][toIdx[production.right[0]]]
-                                && P[l-p-1][s+p][toIdx[production.right[1]]])
+                        if (P[p-1][s][production.right[0]]
+                                && P[l-p-1][s+p][production.right[1]])
                             P[l-1][s][production.idx] = true;
                     }
                 }
