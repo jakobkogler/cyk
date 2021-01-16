@@ -340,7 +340,7 @@ auto UNIT(Expansions[string] productions) {
             bool finished = true;
             Expansions newExpansions2;
             foreach (expansion; newExpansions) {
-                if (expansion.length > 1 || expansion.isTerminal) {
+                if (expansion.length > 1 || expansion.isTerminal || expansion.length == 0) {
                     newExpansions2 ~= expansion;
                 } else {
                     newExpansions2 ~= productions[expansion[0]];
@@ -378,6 +378,13 @@ unittest {
     {
         auto productions = ["Foo": [[`"*"`]]];
         const expected = productions.dup;
+        const result = UNIT(productions);
+        assert(result == expected);
+    }
+    {
+        auto productions = ["S":[["Unit_a"]], "S0":[["S"], []], "Unit_a":[[`"a"`]]];
+        const expected = ["S0": [[`"a"`], []], "S": [[`"a"`]], "Unit_a": [[`"a"`]]];
+        // TODO: remove unreachable names
         const result = UNIT(productions);
         assert(result == expected);
     }
