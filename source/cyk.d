@@ -104,7 +104,6 @@ bool isTerminal(const ProductionRule rule) {
 class CYK {
     this(string[] rules, string S = "S") {
         this.cnf = rules.map!parseProductionRule.array.simplify.ChomskyNormalForm(S);
-        this.S = S;
         int idx;
         foreach (name, expansions; this.cnf) {
             toIdx[name] = idx;
@@ -118,7 +117,6 @@ class CYK {
     private Expansions[string] cnf;
     private ProductionRule[] productionRules;
     private int[string] toIdx;
-    private string S;
 
     bool check(string[] word) {
         const n = word.length.to!int;
@@ -146,7 +144,7 @@ class CYK {
             }
         }
 
-        return P[n-1][0][toIdx[S]];
+        return P[n-1][0][toIdx["S0"]];
     }
 }
 @("CYK")
