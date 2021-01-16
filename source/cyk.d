@@ -1,8 +1,10 @@
 import std.array : array, split;
 import std.algorithm : map;
+import std.conv : to;
 import std.regex : ctRegex, match, matchAll;
 
-import utils : Expansions;
+import utils : Expansions, isTerminal;
+import chomsky_normal_form : ChomskyNormalForm;
 
 struct ParsedRule {
     string left;
@@ -66,4 +68,83 @@ unittest {
                          "B": [[`"b"`]]];
         assert(rules.simplify == expected);
     }
+}
+
+struct ProductionRule {
+    int idx;
+    string name;
+    string[] right;
+}
+
+bool isTerminal(const ProductionRule rule) {
+    return rule.right.length == 1 && rule.right[0].isTerminal;
+}
+
+class CYK {
+    this(string[] rules, string S = "S") {
+        this.cnf = rules.map!parseProductionRule.array.simplify.ChomskyNormalForm(S);
+        this.S = S;
+        int idx;
+        foreach (name, expansions; this.cnf) {
+            toIdx[name] = idx;
+            foreach (expansion; expansions) {
+                productionRules ~= ProductionRule(idx, name, expansion);
+            }
+            idx += 1;
+        }
+    }
+
+    private Expansions[string] cnf;
+    private ProductionRule[] productionRules;
+    private int[string] toIdx;
+    private string S;
+
+    bool check(string[] word) {
+        const n = word.length.to!int;
+        const r = productionRules.length;
+
+        bool[][][] P = new bool[][][](n, n, r);
+        foreach (s, c; word) {
+            foreach (production; productionRules) {
+                if (production.isTerminal && production.right[0][1..$-1] == c)
+                    P[0][s][production.idx] = true;
+            }
+        }
+
+        foreach (l; 2 .. n+1) {
+            foreach (s; 0 .. n-l+1) {
+                foreach (p; 1 .. l) {
+                    foreach (production; productionRules) {
+                        if (production.isTerminal)
+                            continue;
+                        if (P[p-1][s][toIdx[production.right[0]]]
+                                && P[l-p-1][s+p][toIdx[production.right[1]]])
+                            P[l-1][s][production.idx] = true;
+                    }
+                }
+            }
+        }
+
+        return P[n-1][0][toIdx[S]];
+    }
+}
+@("CYK")
+unittest {
+    string[] rules = [
+        `Expr → Term | Expr AddOp Term | AddOp Term`,
+        `Term → Factor | Term MulOp Factor`,
+        `Factor → Primary | Factor "^" Primary`,
+        `Primary → number | variable | "(" Expr ")"`,
+        `AddOp → "+" | "-"`,
+        `MulOp → "*" | "/"`,
+        `number → "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"`,
+        `variable → "a" | "b" | "c"`
+    ];
+    CYK cyk = new CYK(rules, "Expr");
+    assert(cyk.check("a ^ 2 + 4 * b".split));
+    assert(cyk.check("a ^ ( 2 + 4 * b )".split));
+    assert(!cyk.check("a ^ 2 + 4 * b )".split));
+    assert(cyk.check("+ 5".split));
+    assert(!cyk.check("* 5".split));
+    assert(cyk.check("a * 5".split));
 }
