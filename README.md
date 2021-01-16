@@ -24,18 +24,18 @@ import cyk : CYK;
 
 void main() {
     // example parsing a function declaration with arbitrary many parameter
-    string[] rules = [
-        `FunctionDeclaration → ReturnType FunctionName "(" OptionalParameters ")"`,
-        `ReturnType → Type`,
-        `Type → IntType | FloatingType | "void" | "string"`,
-        `IntType → "int" | "long"`,
-        `FloatingType → "float" | "double"`,
-        `FunctionName → "foo" | "bar" | "baz"`,
-        `OptionalParameters → Parameters`,
-        `OptionalParameters →`,
-        `Parameters → Type ParameterName | Type ParameterName "," Parameters`,
-        `ParameterName → "a" | "b" | "c"`
-    ];
+    string[] rules = `
+        FunctionDeclaration → ReturnType FunctionName "(" OptionalParameters ")"
+        ReturnType → Type
+        Type → IntType | FloatingType | "void" | "string"
+        IntType → "int" | "long"
+        FloatingType → "float" | "double"
+        FunctionName → "foo" | "bar" | "baz"
+        OptionalParameters → Parameters
+        OptionalParameters →
+        Parameters → Type ParameterName | Type ParameterName "," Parameters
+        ParameterName → "a" | "b" | "c"
+    `.split("\n");
 
     CYK cyk = new CYK(rules, "FunctionDeclaration");
 
@@ -51,13 +51,13 @@ void main() {
     assert(!cyk.check("void baz ( int a float b , long c )".split));
 
     // another simpler example
-    string[] rules2 = [
-        `A → "a"`,
-        `B → "b"`,
-        `Double → A A | B B`,
-        `Different → A B | B A`,
-        `Expr → Double ">" Different | Different "<" Double`
-    ];
+    string[] rules2 = `
+        A → "a"
+        B → "b"
+        Double → A A | B B
+        Different → A B | B A
+        Expr → Double ">" Different | Different "<" Double
+    `.split("\n");
 
     CYK cyk2 = new CYK(rules2, "Expr");
 
