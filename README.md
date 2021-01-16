@@ -23,6 +23,7 @@ import std.string : split;
 import cyk : CYK;
 
 void main() {
+    // example parsing a function declaration with arbitrary many parameter
     string[] rules = [
         `FunctionDeclaration → ReturnType FunctionName "(" OptionalParameters ")"`,
         `ReturnType → Type`,
@@ -38,14 +39,30 @@ void main() {
 
     CYK cyk = new CYK(rules, "FunctionDeclaration");
 
-    // some valid function declarations
+    // check some valid function declarations
+    // with the method `bool check(string[])`
     assert(cyk.check("double foo ( )".split));
     assert(cyk.check("string bar ( int a )".split));
     assert(cyk.check("void baz ( int a , float b , long c )".split));
 
-    // some invalid function declarations
+    // check some invalid function declarations
     assert(!cyk.check("double foo ( int )".split));
     assert(!cyk.check("string ( int a )".split));
     assert(!cyk.check("void baz ( int a float b , long c )".split));
+
+    // another simpler example
+    string[] rules2 = [
+        `A → "a"`,
+        `B → "b"`,
+        `Double → A A | B B`,
+        `Different → A B | B A`,
+        `Expr → Double ">" Different | Different "<" Double`
+    ];
+
+    CYK cyk2 = new CYK(rules2, "Expr");
+
+    // if all terminals are single chars, you can also use the simpler `bool check(string)` method
+    assert(cyk2.check("ab<aa"));
+    assert(!cyk2.check("bb<bb"));
 }
 ```
