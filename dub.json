@@ -3,7 +3,7 @@
 		"Jakob Kogler"
 	],
 	"copyright": "Copyright © 2021, Jakob Kogler",
-	"description": "context-free grammar parser",
+	"description": "context-free grammar parser using the CYK algorithm",
 	"license": "MIT",
 	"name": "cyk",
 	"configurations": [
