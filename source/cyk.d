@@ -12,7 +12,7 @@ struct ParsedRule {
 }
 
 ParsedRule parseProductionRule(in string rule) {
-    static const re = ctRegex!`^\s*(\w+)\s*→(.+)$`;
+    static const re = ctRegex!`^\s*(\w+)\s*→(.*)$`;
     const m = match(rule, re);
     const c = m.captures;
 
@@ -21,7 +21,12 @@ ParsedRule parseProductionRule(in string rule) {
         return matchAll(expansion, re).map!"a.hit".array;
     }
 
-    auto expansions = c[2].split("|").map!parseExpansion.array;
+    Expansions expansions;
+    if (c[2].length == 0) {
+        expansions = [[]];
+    } else {
+        expansions = c[2].split("|").map!parseExpansion.array;
+    }
     return ParsedRule(c[1], expansions);
 }
 @("parse rules")
@@ -39,6 +44,8 @@ unittest {
     check(`Bar → "bar"`, ParsedRule("Bar", [[`"bar"`]]));
     check(`Primary → number | variable | "(" Expr ")"`,
           ParsedRule("Primary", [["number"], ["variable"], [`"("`, "Expr", `")"`]]));
+    check(`Foo → `, ParsedRule("Foo", [[]]));
+    check(`Foo →`, ParsedRule("Foo", [[]]));
 }
 
 auto simplify(ParsedRule[] rules) {
@@ -67,6 +74,20 @@ unittest {
         auto expected = ["Foo": [["A", "B"], ["B", "A"], [`"a"`]],
                          "B": [[`"b"`]]];
         assert(rules.simplify == expected);
+    }
+    {
+        auto rules = [ParsedRule("Foo", [["A"]]),
+                      ParsedRule("Foo", [[]])];
+        auto expected = ["Foo": [["A"], []]];
+        assert(rules.simplify == expected);
+    }
+    {
+        auto rules = [
+            `Parameters → Type ParameterName`,
+            `Parameters →`,
+        ];
+        auto expected = ["Parameters": [["Type", "ParameterName"], []]];
+        assert(rules.map!parseProductionRule.array.simplify == expected);
     }
 }
 
