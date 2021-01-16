@@ -149,21 +149,57 @@ class CYK {
 }
 @("CYK")
 unittest {
-    string[] rules = [
-        `Expr → Term | Expr AddOp Term | AddOp Term`,
-        `Term → Factor | Term MulOp Factor`,
-        `Factor → Primary | Factor "^" Primary`,
-        `Primary → number | variable | "(" Expr ")"`,
-        `AddOp → "+" | "-"`,
-        `MulOp → "*" | "/"`,
-        `number → "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"`,
-        `variable → "a" | "b" | "c"`
-    ];
-    CYK cyk = new CYK(rules, "Expr");
-    assert(cyk.check("a ^ 2 + 4 * b".split));
-    assert(cyk.check("a ^ ( 2 + 4 * b )".split));
-    assert(!cyk.check("a ^ 2 + 4 * b )".split));
-    assert(cyk.check("+ 5".split));
-    assert(!cyk.check("* 5".split));
-    assert(cyk.check("a * 5".split));
+    {
+        string[] rules = [
+            `Expr → Term | Expr AddOp Term | AddOp Term`,
+            `Term → Factor | Term MulOp Factor`,
+            `Factor → Primary | Factor "^" Primary`,
+            `Primary → number | variable | "(" Expr ")"`,
+            `AddOp → "+" | "-"`,
+            `MulOp → "*" | "/"`,
+            `number → "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"`,
+            `variable → "a" | "b" | "c"`
+        ];
+        CYK cyk = new CYK(rules, "Expr");
+        assert(cyk.check("a ^ 2 + 4 * b".split));
+        assert(cyk.check("a ^ ( 2 + 4 * b )".split));
+        assert(!cyk.check("a ^ 2 + 4 * b )".split));
+        assert(cyk.check("+ 5".split));
+        assert(!cyk.check("* 5".split));
+        assert(cyk.check("a * 5".split));
+    }
+    {
+        string[] rules = [
+            `S → "a"`,
+            `S →`
+        ];
+        CYK cyk = new CYK(rules, "S");  // TODO
+        assert(cyk.check("a".split));
+    }
+    {
+        string[] rules = [
+            `FunctionDeclaration → ReturnType FunctionName "(" OptionalParameters ")"`,
+            `ReturnType → Type`,
+            `Type → IntType | FloatingType | "void" | "string"`,
+            `IntType → "int" | "long"`,
+            `FloatingType → "float" | "double"`,
+            `FunctionName → "foo" | "bar" | "baz"`,
+            `OptionalParameters → Parameters`,
+            `OptionalParameters →`,
+            `Parameters → Type ParameterName | Type ParameterName "," Parameters`,
+            `ParameterName → "a" | "b" | "c"`
+        ];
+
+        CYK cyk = new CYK(rules, "FunctionDeclaration");
+
+        // some valid function declarations
+        assert(cyk.check("double foo ( )".split));
+        assert(cyk.check("string bar ( int a )".split));
+        assert(cyk.check("void baz ( int a , float b , long c )".split));
+
+        // some invalid function declarations
+        assert(!cyk.check("double foo ( int )".split));
+        assert(!cyk.check("string ( int a )".split));
+        assert(!cyk.check("void baz ( int a float b , long c )".split));
+    }
 }
