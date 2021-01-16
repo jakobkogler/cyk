@@ -4,6 +4,9 @@ A context-free grammar parser using the [Cocke–Younger–Kasami algorithm](htt
 
 [![Build](https://github.com/jakobkogler/cyk/workflows/build/badge.svg)](https://github.com/jakobkogler/cyk/actions?query=branch%3Amain+workflow%3Abuild)
 [![codecov](https://codecov.io/gh/jakobkogler/cyk/branch/main/graph/badge.svg?token=42FEQ64OAG)](https://codecov.io/gh/jakobkogler/cyk)
+[![dub](https://img.shields.io/dub/v/cyk)](https://code.dlang.org/packages/cyk)
+[![dub](https://img.shields.io/dub/l/cyk)](https://code.dlang.org/packages/cyk)
+
 
 ## Installation
 
