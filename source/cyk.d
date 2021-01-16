@@ -10,12 +10,12 @@ struct ParsedRule {
 }
 
 ParsedRule parseProductionRule(in string rule) {
-    static const re = ctRegex!`^\s*(\w+)\s*→([\w"|\s]+)$`;
+    static const re = ctRegex!`^\s*(\w+)\s*→(.+)$`;
     const m = match(rule, re);
     const c = m.captures;
 
     string[] parseExpansion(in string expansion) {
-        static const re = ctRegex!`(\w+)|("\w+")`;
+        static const re = ctRegex!`(\w+)|("[^"]+")`;
         return matchAll(expansion, re).map!"a.hit".array;
     }
 
@@ -35,6 +35,8 @@ unittest {
     check(`Baz → Foo Bar`, ParsedRule("Baz", [["Foo", "Bar"]]));
     check(`Baz → "a" "b"`, ParsedRule("Baz", [[`"a"`, `"b"`]]));
     check(`Bar → "bar"`, ParsedRule("Bar", [[`"bar"`]]));
+    check(`Primary → number | variable | "(" Expr ")"`,
+          ParsedRule("Primary", [["number"], ["variable"], [`"("`, "Expr", `")"`]]));
 }
 
 auto simplify(ParsedRule[] rules) {
