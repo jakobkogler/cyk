@@ -118,6 +118,9 @@ class CYK {
     private ProductionRule[] productionRules;
     private int[string] toIdx;
 
+    /**
+    Checks if the sentence matches the defined context-free grammar
+     */
     bool check(string[] word) {
         const n = word.length.to!int;
         const r = productionRules.length;
@@ -145,6 +148,14 @@ class CYK {
         }
 
         return P[n-1][0][toIdx["S0"]];
+    }
+
+    /**
+    Checks if the sentence (here in the form of a single string) matches the defined context-free grammar
+    This method only works, if every terminal is a single character.
+     */
+    bool check(string word) {
+        return check(word.map!(to!string).array);
     }
 }
 @("CYK")
@@ -201,5 +212,28 @@ unittest {
         assert(!cyk.check("double foo ( int )".split));
         assert(!cyk.check("string ( int a )".split));
         assert(!cyk.check("void baz ( int a float b , long c )".split));
+    }
+    {
+        string[] rules = [
+            `A → "a"`,
+            `B → "b"`,
+            `Double → A A | B B`,
+            `Different → A B | B A`,
+            `Expr → Double ">" Different | Different "<" Double`
+        ];
+
+        CYK cyk = new CYK(rules, "Expr");
+
+        assert(cyk.check("ab<aa"));
+        assert(cyk.check("ba<aa"));
+        assert(cyk.check("ab<bb"));
+        assert(cyk.check("ba<bb"));
+        assert(cyk.check("aa>ab"));
+        assert(cyk.check("aa>ba"));
+        assert(cyk.check("bb>ab"));
+        assert(cyk.check("bb>ba"));
+        assert(!cyk.check("aa>aa"));
+        assert(!cyk.check("aa=aa"));
+        assert(!cyk.check("ab>ba"));
     }
 }
